@@ -1,18 +1,24 @@
 from langgraph.graph import StateGraph, START, END
-from Nodes import generateRandomName, actionNode, call_model
-from Edges import should_continue
+from Nodes import call_db_model, generate_question_node, tool_node
+from edges.route import route_tools
 from State import State
 
 GraphBuilder = StateGraph(State)
 
+# GraphBuilder.add_node("call_model", call_model)
+GraphBuilder.add_node("call_db_model", call_db_model)
+GraphBuilder.add_node("tools", tool_node)
+# GraphBuilder.add_node("generate_question_node", generate_question_node)
 
-GraphBuilder.add_node("entry", generateRandomName)
-GraphBuilder.add_node("action", actionNode)
-GraphBuilder.add_node("call_model", call_model)
 
-GraphBuilder.add_edge(START, "entry")
-GraphBuilder.add_edge("entry", "action")
+GraphBuilder.add_edge(START, "call_db_model")
+# GraphBuilder.add_edge("generate_question_node", "call_db_model")
+# GraphBuilder.add_edge("call_model", "call_db_model")
+
+GraphBuilder.add_edge("tools", "call_db_model")
+
 GraphBuilder.add_conditional_edges(
-    "action", should_continue
+    "call_db_model",
+    route_tools
 )
-GraphBuilder.add_edge("action", END)
+

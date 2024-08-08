@@ -1,1 +1,1 @@
-source .env && python main.py
+chainlit run main.py -w
