@@ -15,6 +15,7 @@ from langchain_community.tools.sql_database.tool import (
 from langchain_community.utilities.sql_database import SQLDatabase
 from langchain_core.pydantic_v1 import BaseModel, Field, root_validator
 from typing import Any, Dict, Optional, Sequence, Type, Union
+from toolkits.generic_sql.dbragtool import getListOfAllTables
 
 
 class BaseSQLDatabaseTool(BaseModel):
@@ -41,11 +42,12 @@ class ListSQLDatabaseTool(BaseSQLDatabaseTool, BaseTool):
         tool_input: str = "",
     ) -> str:
         """Get a comma-separated list of table names."""
-        return ", ".join([
-            "tag",
-            "tag_usage",
-            "table_entity"
-        ])
+        # return ", ".join([
+        #     "tag",
+        #     "tag_usage",
+        #     "table_entity"
+        # ])
+        return getListOfAllTables()
 
 
 

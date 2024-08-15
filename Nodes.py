@@ -10,6 +10,8 @@ from toolkits.generic_sql.SQLDatabaseToolkit import SQLDatabaseToolkit
 from models import model
 from databases import db
 from langchain_core.messages import HumanMessage, SystemMessage
+from toolkits.generic_sql.dbragtool import getListOfTables, getRelationshipsForTables
+
 
 
 
@@ -56,6 +58,7 @@ dbtools = sqltoolkit.get_tools()
 model_db = model.bind_tools(dbtools)
 
 def call_db_model(state: State):
+    # print(state["messages"][7], "\n\n\n\n\n\n\n\n STATE", state["messages"][0])
     response = model_db.invoke(state["messages"])
 
     return {"messages": response}
@@ -95,4 +98,45 @@ class BasicToolNode:
 tool_node = BasicToolNode(tools=dbtools)
 
 
+# DB INFO NODE
+
+
+
+def db_info_node(state: State):
+    promptWithSchemaAndRelationToLLM = """Below is the relevent schema of the tables that might solve the problem first use the schema to look if it can be solved then you can use all the list tables available to you. 
+        
+        
+        {schema}
+
+
+        Below is also relationship between these tables you can also use these to structure the sql query.
+        
+        {relationships}
+
+        All the entity tables also have json column which contains the metadata of the entity in the json format. You can use this metadata to generate the query. You should query 1 row for each entity table and use the metadata to generate the query.
+    """
+
+    question = state["question"]
+    print("\n\n\n\n\n\n\n\n\n CHECKING QUESTION", question)
+    schema = getListOfTables(question)
+
+    tables = schema["tables"]
+    relationships = getRelationshipsForTables(tables)
+    schema = str(schema["schemas"])
+    promptWithSchemaAndRelationToLLM = promptWithSchemaAndRelationToLLM.format(schema=schema, relationships=relationships)
+
+    state["messages"].append(SystemMessage(content=promptWithSchemaAndRelationToLLM))
+    for i in range(len(state["messages"])-1, 0, -1):
+        if isinstance(state["messages"][i], HumanMessage):
+            del state["messages"][i]
+
+    state["messages"].append(HumanMessage(content=question))
+
+    # Remove the last HumanMessage and add the new one, check if the last message is HumanMessage
+
+
+
+    # print("FINAL \n\n\n CHECK \n\n\n", state['messages'][7], type(state['messages'][7]))
+
+    return state
 
